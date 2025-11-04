@@ -28,8 +28,3 @@ vector<string> SPECIAL_FOODS = {"🍇", "🍌", "🍋"};
 int currentSpecialFoodIndex = 0;
 
 // Initialize static members for non-Windows systems
-#ifndef _WIN32
-struct termios InputHandler::oldt;
-struct termios InputHandler::newt;
-bool InputHandler::rawModeEnabled = false;
-#endif
