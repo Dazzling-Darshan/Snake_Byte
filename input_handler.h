@@ -1,7 +1,7 @@
 #ifndef INPUT_HANDLER_H
 #define INPUT_HANDLER_H
 
-// Platform-specific includes
+// Platform-specific include
 #ifdef _WIN32
     #include <conio.h>
     #include <windows.h>
