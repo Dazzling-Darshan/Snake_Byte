@@ -11,6 +11,12 @@ Jayswal Mayank (202512093)
 
 Harsh Abhichandani (202512027)
 
+# Gameplay Snapshots
+<img width="1920" height="1200" alt="Screenshot (387)" src="https://github.com/user-attachments/assets/8267036d-7fcf-4ba4-8d85-019b9d4588b2" />
+
+
+
+
 # 🎮 Features
 
 Core Gameplay
