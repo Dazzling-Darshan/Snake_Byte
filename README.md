@@ -76,14 +76,14 @@ Terminal/Console that supports UTF-8 and emojis
 # Compilation Instructions
 Windows
 bash
-
+```
 g++ -std=c++17 main.cpp implementation.cpp -o snake_game.exe
-
+```
 Linux/macOS
 bash
-
+```
 g++ -std=c++17 main.cpp implementation.cpp -o snake_game
-
+```
 Recommended Compilers
 Windows: MinGW-w64, Visual Studio 2019+
 
