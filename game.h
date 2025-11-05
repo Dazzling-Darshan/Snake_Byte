@@ -36,10 +36,6 @@ public:
     int getLength() const;
 };
 
-// ==========================
-// Commit 2 additions below
-// ==========================
-
 class Game {
 private:
     Snake snake;
@@ -56,7 +52,7 @@ private:
     pair<int, int> crashPosition;
     bool wallCrash;
 
-    // Obstacle handling
+    // Obstacle members
     const int OBSTACLE_DURATION = 8;
     const int OBSTACLE_COUNT = 5;
     vector<pair<int, int>> obstacles;
@@ -68,20 +64,24 @@ private:
     int minSpeed = 75;
     int speedDecrement = 9;
 
-    // Helper methods (to be implemented later)
+    // Helper methods
     bool isObstacle(int x, int y) const;
     void spawnFood();
     void spawnSpecialFood();
     void spawnObstacles();
-    bool checkCollision();
-    void resetGame();
     void updateSpecialFood();
     void updateObstacles();
-    void saveHighScore();
-    int loadHighScore();
+    int getObstacleTimeRemaining() const;
 
 public:
-    Game();  // Constructor
+    Game();
+    ~Game();
+    void draw();
+    void update();
+    void handleInput();
+    bool isGameOver() const;
+    bool shouldQuit() const;
+    int getGameSpeed();
 };
 
 #endif
