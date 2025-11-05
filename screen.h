@@ -28,3 +28,27 @@ extern string FOOD_EMOJI;
 extern string SPECIAL_FOOD_EMOJI;
 extern string WALL;
 extern string EMPTY_SPACE;
+
+// Special food types
+extern vector<string> SPECIAL_FOODS;
+extern int currentSpecialFoodIndex;
+
+class Screen {
+private:
+    string screenBuffer;
+
+public:
+    void clear();
+    void addToBuffer(const string& content);
+    void draw();
+    void hideCursor();
+    void showCursor();
+};
+
+// Cross-platform console setup
+void setupConsole();
+
+// Function to load custom graphics from files
+bool loadCustomGraphics();
+
+#endif
