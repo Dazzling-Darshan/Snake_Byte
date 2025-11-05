@@ -12,9 +12,12 @@ Jayswal Mayank (202512093)
 Harsh Abhichandani (202512027)
 
 # Gameplay Snapshots
-<img width="1920" height="1200" alt="Screenshot (387)" src="https://github.com/user-attachments/assets/8267036d-7fcf-4ba4-8d85-019b9d4588b2" />
 
-
+<img width="885" height="577" alt="1pic" src="https://github.com/user-attachments/assets/b52da154-4f48-4779-904a-296383028ef5" />
+.
+<img width="885" height="577" alt="2pic" src="https://github.com/user-attachments/assets/1f7656df-853a-4878-91ac-d042e8a1aa3e" />
+.
+<img width="885" height="577" alt="3pic" src="https://github.com/user-attachments/assets/a3173318-0f60-4b1b-ae49-e314f0f089db" />
 
 
 # 🎮 Features
