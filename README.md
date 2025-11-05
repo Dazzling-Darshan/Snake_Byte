@@ -76,11 +76,14 @@ Terminal/Console that supports UTF-8 and emojis
 # Compilation Instructions
 Windows
 bash
+
 g++ -std=c++17 main.cpp implementation.cpp -o snake_game.exe
 
 Linux/macOS
 bash
+
 g++ -std=c++17 main.cpp implementation.cpp -o snake_game
+
 Recommended Compilers
 Windows: MinGW-w64, Visual Studio 2019+
 
@@ -128,6 +131,7 @@ Score display updates in real-time
 
 # 🏗️ Project Structure
 
+``` 
 snake_game/
 ├── main.cpp              # Entry point and game loop
 ├── game.h               # Game and Snake class declarations
@@ -137,6 +141,8 @@ snake_game/
 ├── head.txt            # Custom snake head graphic (optional)
 ├── body.txt            # Custom snake body graphic (optional)
 └── special_food.txt    # Custom special food graphic (optional)
+
+```
 
 # 🎨 Customization
 
