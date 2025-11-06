@@ -13,11 +13,14 @@ Harsh Abhichandani (202512027)
 
 # Gameplay Snapshots
 
-<img width="885" height="577" alt="1pic" src="https://github.com/user-attachments/assets/b52da154-4f48-4779-904a-296383028ef5" />
+<img width="885" height="577" alt="p1" src="https://github.com/user-attachments/assets/73dbf3bb-0c5b-4f82-82ea-33242ed07d77" />
+
 .
-<img width="885" height="577" alt="2pic" src="https://github.com/user-attachments/assets/1f7656df-853a-4878-91ac-d042e8a1aa3e" />
+<img width="885" height="577" alt="p2" src="https://github.com/user-attachments/assets/8629d329-9fde-46b4-b4d0-436200e186c3" />
+
 .
-<img width="885" height="577" alt="3pic" src="https://github.com/user-attachments/assets/a3173318-0f60-4b1b-ae49-e314f0f089db" />
+<img width="885" height="577" alt="p3" src="https://github.com/user-attachments/assets/56238562-912c-4298-90cf-38ddb4579d67" />
+
 
 
 # 🎮 Features
@@ -40,6 +43,8 @@ Special Food System 🍇🍌🍋
 Spawns every 4 regular foods
 
 Grants 3x growth and 30 points
+
+High score feature
 
 Disappears after 10 seconds
 
