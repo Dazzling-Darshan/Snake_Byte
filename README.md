@@ -30,6 +30,8 @@ Classic Snake mechanics with smooth controls
 
 Dynamic speed system - game gets faster as snake grows
 
+High score feature
+
 Score tracking with bonus points for special food
 
 Wall collision detection with visual crash effects
@@ -44,8 +46,6 @@ Spawns every 4 regular foods
 
 Grants 3x growth and 30 points
 
-High score feature
-
 Disappears after 10 seconds
 
 Rotating special food emojis
@@ -54,9 +54,9 @@ Rotating special food emojis
 
 Spawns every 5 foods
 
-5 randomly placed obstacles
+8 randomly placed obstacles
 
-Lasts for 8 seconds with countdown timer
+Lasts for 10 seconds with countdown timer
 
 Adds strategic challenge
 
