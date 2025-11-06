@@ -29,7 +29,7 @@ int main() {
         game.draw();
         game.handleInput();
         
-        if (!game.isGameOver()) {
+        if (!game.isGameOver() && !game.isPaused()) {
             game.update();
         }
         
