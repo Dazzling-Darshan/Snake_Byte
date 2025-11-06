@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept> // Added for exception handling with stoi
+#include <iomanip>   // For formatted output
 
 using namespace std;
 
@@ -20,8 +21,11 @@ string SNAKE_HEAD = "🐍";
 string SNAKE_HEAD_DEAD = "💥";
 string SNAKE_BODY = "🟢";
 string SNAKE_BODY_DEAD = "🔴";
+string SNAKE_BODY_SHIELD = "🟣"; // New: Purple body for shield
 string FOOD_EMOJI = "🍎";
 string SPECIAL_FOOD_EMOJI = "🍇";
+string POISON_FOOD_EMOJI = "🍄"; // New: Poison food emoji
+string SHIELD_EMOJI = "🛡️"; // New: Shield power-up emoji
 string WALL = "⬜";
 string EMPTY_SPACE = "  ";
 
@@ -181,6 +185,15 @@ bool loadCustomGraphics() {
     return loaded;
 }
 
+// Helper function to safely create padded strings
+string createPaddedString(const string& content, int totalLength) {
+    int contentLength = content.length();
+    if (contentLength >= totalLength) {
+        return content;
+    }
+    return content + string(totalLength - contentLength, ' ');
+}
+
 // Snake implementation
 Snake::Snake(int startX, int startY) {
     body.push_back({startX, startY});
@@ -188,6 +201,7 @@ Snake::Snake(int startX, int startY) {
     nextDir = RIGHT;
     grow = false;
     growAmount = 1;
+    shieldActive = false;
 }
 
 void Snake::changeDirection(Direction newDir) {
@@ -231,6 +245,13 @@ void Snake::setGrow(bool shouldGrow, int amount) {
     growAmount = amount;
 }
 
+// New: Method to shrink snake by removing tail segments
+void Snake::shrink(int amount) {
+    for (int i = 0; i < amount && body.size() > 1; i++) {
+        body.pop_back();
+    }
+}
+
 const vector<pair<int, int>>& Snake::getBody() const {
     return body;
 }
@@ -243,10 +264,40 @@ int Snake::getLength() const {
     return body.size();
 }
 
+// New: Shield methods implementation
+void Snake::activateShield() {
+    shieldActive = true;
+    shieldStartTime = chrono::steady_clock::now();
+}
+
+void Snake::deactivateShield() {
+    shieldActive = false;
+}
+
+bool Snake::hasShield() const {
+    return shieldActive;
+}
+
+int Snake::getShieldTimeRemaining() const {
+    if (!shieldActive) return 0;
+    auto now = chrono::steady_clock::now();
+    auto elapsed = chrono::duration_cast<chrono::seconds>(now - shieldStartTime).count();
+    return max(0, 10 - (int)elapsed); // 10 seconds shield duration
+}
+
+bool Snake::shouldBlink() const {
+    if (!shieldActive) return false;
+    auto now = chrono::steady_clock::now();
+    auto elapsed = chrono::duration_cast<chrono::milliseconds>(now - shieldStartTime).count();
+    // Blink every 500ms
+    return (elapsed / 500) % 2 == 0;
+}
+
 // Game implementation
 Game::Game() : snake(WIDTH / 4, HEIGHT / 2), score(0), gameOver(false), quit(false), 
-             foodEaten(0), specialFoodActive(false), wallCrash(false),
-             obstaclesActive(false), highScore(0) { // Initialize highScore to 0
+             paused(false), foodEaten(0), specialFoodEaten(0), poisonFoodEaten(0), 
+             specialFoodActive(false), poisonFoodActive(false), shieldActive(false),
+             wallCrash(false), obstaclesActive(false), highScore(0) {
     srand(static_cast<unsigned int>(time(0)));
     
     setupConsole();
@@ -255,6 +306,9 @@ Game::Game() : snake(WIDTH / 4, HEIGHT / 2), score(0), gameOver(false), quit(fal
     if (loadCustomGraphics()) {
         // Custom graphics loaded silently
     }
+    
+    // Initialize last shield spawn time
+    lastShieldSpawnTime = chrono::steady_clock::now();
     
     // --- HIGH SCORE ADDITION: Load the score upon starting the game
     loadHighScore();
@@ -338,6 +392,12 @@ void Game::spawnFood() {
         if (specialFoodActive && food.first == specialFood.first && food.second == specialFood.second) {
             occupied = true;
         }
+        if (poisonFoodActive && food.first == poisonFood.first && food.second == poisonFood.second) {
+            occupied = true;
+        }
+        if (shieldActive && food.first == shield.first && food.second == shield.second) {
+            occupied = true;
+        }
         if (isObstacle(food.first, food.second)) {
             occupied = true;
         }
@@ -360,6 +420,12 @@ void Game::spawnSpecialFood() {
         if (specialFood.first == food.first && specialFood.second == food.second) {
             occupied = true;
         }
+        if (poisonFoodActive && specialFood.first == poisonFood.first && specialFood.second == poisonFood.second) {
+            occupied = true;
+        }
+        if (shieldActive && specialFood.first == shield.first && specialFood.second == shield.second) {
+            occupied = true;
+        }
         if (isObstacle(specialFood.first, specialFood.second)) {
             occupied = true;
         }
@@ -369,6 +435,68 @@ void Game::spawnSpecialFood() {
     
     SPECIAL_FOOD_EMOJI = SPECIAL_FOODS[currentSpecialFoodIndex];
     currentSpecialFoodIndex = (currentSpecialFoodIndex + 1) % SPECIAL_FOODS.size();
+}
+
+// New: Spawn poison food
+void Game::spawnPoisonFood() {
+    bool occupied;
+    do {
+        occupied = false;
+        poisonFood.first = rand() % (WIDTH - 2) + 1;
+        poisonFood.second = rand() % (HEIGHT - 2) + 1;
+        
+        for (const auto& segment : snake.getBody()) {
+            if (segment.first == poisonFood.first && segment.second == poisonFood.second) {
+                occupied = true;
+                break;
+            }
+        }
+        if (poisonFood.first == food.first && poisonFood.second == food.second) {
+            occupied = true;
+        }
+        if (specialFoodActive && poisonFood.first == specialFood.first && poisonFood.second == specialFood.second) {
+            occupied = true;
+        }
+        if (shieldActive && poisonFood.first == shield.first && poisonFood.second == shield.second) {
+            occupied = true;
+        }
+        if (isObstacle(poisonFood.first, poisonFood.second)) {
+            occupied = true;
+        }
+    } while (occupied);
+    poisonFoodActive = true;
+    poisonFoodSpawnTime = chrono::steady_clock::now();
+}
+
+// New: Spawn shield power-up
+void Game::spawnShield() {
+    bool occupied;
+    do {
+        occupied = false;
+        shield.first = rand() % (WIDTH - 2) + 1;
+        shield.second = rand() % (HEIGHT - 2) + 1;
+        
+        for (const auto& segment : snake.getBody()) {
+            if (segment.first == shield.first && segment.second == shield.second) {
+                occupied = true;
+                break;
+            }
+        }
+        if (shield.first == food.first && shield.second == food.second) {
+            occupied = true;
+        }
+        if (specialFoodActive && shield.first == specialFood.first && shield.second == specialFood.second) {
+            occupied = true;
+        }
+        if (poisonFoodActive && shield.first == poisonFood.first && shield.second == poisonFood.second) {
+            occupied = true;
+        }
+        if (isObstacle(shield.first, shield.second)) {
+            occupied = true;
+        }
+    } while (occupied);
+    shieldActive = true;
+    shieldSpawnTime = chrono::steady_clock::now();
 }
 
 void Game::spawnObstacles() {
@@ -395,6 +523,12 @@ void Game::spawnObstacles() {
             if (specialFoodActive && obs.first == specialFood.first && obs.second == specialFood.second) {
                 occupied = true;
             }
+            if (poisonFoodActive && obs.first == poisonFood.first && obs.second == poisonFood.second) {
+                occupied = true;
+            }
+            if (shieldActive && obs.first == shield.first && obs.second == shield.second) {
+                occupied = true;
+            }
         } while (occupied);
         obstacles.push_back(obs);
     }
@@ -408,6 +542,44 @@ void Game::updateSpecialFood() {
         auto duration = chrono::duration_cast<chrono::seconds>(now - specialFoodSpawnTime);
         if (duration.count() >= SPECIAL_FOOD_DURATION) {
             specialFoodActive = false;
+        }
+    }
+}
+
+// New: Update poison food
+void Game::updatePoisonFood() {
+    if (poisonFoodActive) {
+        auto now = chrono::steady_clock::now();
+        auto duration = chrono::duration_cast<chrono::seconds>(now - poisonFoodSpawnTime);
+        if (duration.count() >= POISON_FOOD_DURATION) {
+            poisonFoodActive = false;
+        }
+    }
+}
+
+// New: Update shield power-up
+void Game::updateShield() {
+    // Check if it's time to spawn a new shield
+    auto now = chrono::steady_clock::now();
+    auto timeSinceLastSpawn = chrono::duration_cast<chrono::seconds>(now - lastShieldSpawnTime);
+    
+    if (!shieldActive && timeSinceLastSpawn.count() >= SHIELD_SPAWN_INTERVAL) {
+        spawnShield();
+        lastShieldSpawnTime = now;
+    }
+    
+    // Update existing shield duration
+    if (shieldActive) {
+        auto shieldDuration = chrono::duration_cast<chrono::seconds>(now - shieldSpawnTime);
+        if (shieldDuration.count() >= SHIELD_DURATION) {
+            shieldActive = false;
+        }
+    }
+    
+    // Update snake's shield status timer
+    if (snake.hasShield()) {
+        if (snake.getShieldTimeRemaining() <= 0) {
+            snake.deactivateShield();
         }
     }
 }
@@ -436,6 +608,16 @@ int Game::getObstacleTimeRemaining() const {
     return max(0, OBSTACLE_DURATION - (int)elapsed);
 }
 
+// New: Get pause state
+bool Game::isPaused() const {
+    return paused;
+}
+
+// New: Toggle pause state
+void Game::togglePause() {
+    paused = !paused;
+}
+
 void Game::draw() {
     screen.clear();
     
@@ -457,6 +639,12 @@ void Game::draw() {
             if (gameOver && y == HEIGHT/2 - 1 && x == WIDTH/2 - 4) {
                 screen.addToBuffer("G A M E  O V E R");
                 x += 7;
+                continue;
+            }
+            
+            if (paused && y == HEIGHT/2 && x == WIDTH/2 - 3) {
+                screen.addToBuffer("P A U S E D");
+                x += 5;
                 continue;
             }
             
@@ -484,6 +672,12 @@ void Game::draw() {
                 else if (specialFoodActive && x == specialFood.first && y == specialFood.second && !gameOver) {
                     cellContent = SPECIAL_FOOD_EMOJI;
                 }
+                else if (poisonFoodActive && x == poisonFood.first && y == poisonFood.second && !gameOver) {
+                    cellContent = POISON_FOOD_EMOJI;
+                }
+                else if (shieldActive && x == shield.first && y == shield.second && !gameOver) {
+                    cellContent = SHIELD_EMOJI;
+                }
                 else if (x == food.first && y == food.second && !gameOver) {
                     cellContent = FOOD_EMOJI;
                 }
@@ -492,6 +686,8 @@ void Game::draw() {
                         if (x == snake.getBody()[i].first && y == snake.getBody()[i].second) {
                             if (gameOver) {
                                 cellContent = SNAKE_BODY_DEAD;
+                            } else if (snake.hasShield() && snake.shouldBlink()) {
+                                cellContent = SNAKE_BODY_SHIELD; // Blinking purple when shield active
                             } else {
                                 cellContent = SNAKE_BODY;
                             }
@@ -521,27 +717,94 @@ void Game::draw() {
     }
     screen.addToBuffer("\n");
 
-    // --- UPDATED: Added High Score Display ---
-    screen.addToBuffer("Score: " + to_string(score) + " 🏆 | High Score: " + to_string(highScore) + " ⭐ | Length: " + to_string(snake.getLength()) + "\n");
-    screen.addToBuffer("Speed: " + to_string(getGameSpeed()) + "ms | Obstacles: " + (obstaclesActive ? to_string(getObstacleTimeRemaining()) + "s 🚧" : "Clear ") + " | Controls: WASD/Arrows | Q to Quit\n");
+    // --- FIXED: Clean ASCII interface without box drawing characters ---
+    screen.addToBuffer("==============================================\n");
+    screen.addToBuffer("             GAME STATISTICS                 \n");
+    screen.addToBuffer("----------------------------------------------\n");
+    
+    // Left Column
+    string leftCol = "Score: " + to_string(score) + " 🏆";
+    leftCol += string(25 - leftCol.length(), ' ');
+    screen.addToBuffer(leftCol);
+    
+    // Right Column
+    string rightCol = "Apples: " + to_string(foodEaten) + " 🍎";
+    screen.addToBuffer(rightCol + "\n");
+    
+    // Left Column
+    leftCol = "High Score: " + to_string(highScore) + " ⭐";
+    leftCol += string(25 - leftCol.length(), ' ');
+    screen.addToBuffer(leftCol);
+    
+    // Right Column
+    rightCol = "Special: " + to_string(specialFoodEaten) + " " + SPECIAL_FOOD_EMOJI;
+    screen.addToBuffer(rightCol + "\n");
+    
+    // Left Column
+    leftCol = "Length: " + to_string(snake.getLength()) + " 📏";
+    leftCol += string(25 - leftCol.length(), ' ');
+    screen.addToBuffer(leftCol);
+    
+    // Right Column
+    rightCol = "Poison: " + to_string(poisonFoodEaten) + " " + POISON_FOOD_EMOJI;
+    screen.addToBuffer(rightCol + "\n");
+    
+    // Left Column
+    leftCol = "Speed: " + to_string(getGameSpeed()) + "ms 🚀";
+    leftCol += string(25 - leftCol.length(), ' ');
+    screen.addToBuffer(leftCol);
+    
+    // Shield status
+    string shieldStatus;
+    if (snake.hasShield()) {
+        shieldStatus = "Shield: ACTIVE (" + to_string(snake.getShieldTimeRemaining()) + "s) 🛡️";
+    } else if (shieldActive) {
+        auto now = chrono::steady_clock::now();
+        auto elapsed = chrono::duration_cast<chrono::seconds>(now - shieldSpawnTime).count();
+        int remaining = max(0, SHIELD_DURATION - (int)elapsed);
+        shieldStatus = "Shield: Available (" + to_string(remaining) + "s) " + SHIELD_EMOJI;
+    } else {
+        auto now = chrono::steady_clock::now();
+        auto elapsed = chrono::duration_cast<chrono::seconds>(now - lastShieldSpawnTime).count();
+        int nextSpawn = max(0, SHIELD_SPAWN_INTERVAL - (int)elapsed);
+        shieldStatus = "Shield: Next in " + to_string(nextSpawn) + "s";
+    }
+    screen.addToBuffer(shieldStatus + "\n");
+    
+    // Obstacles status - full width
+    string obstacleStr = "Obstacles: " + (obstaclesActive ? to_string(getObstacleTimeRemaining()) + "s 🚧" : "Clear");
+    screen.addToBuffer(obstacleStr + "\n");
+    
+    screen.addToBuffer("----------------------------------------------\n");
+    
+    // Controls
+    screen.addToBuffer("Controls: WASD/Arrows | SPACE: Pause | Q: Quit\n");
+    
+    if (paused) {
+        screen.addToBuffer("           *** GAME PAUSED ***              \n");
+    }
     
     if (gameOver) {
-        screen.addToBuffer("💀 GAME OVER! Press any key to exit... 💀\n");
+        screen.addToBuffer("          💀 GAME OVER! Press any key      \n");
     }
+    
+    screen.addToBuffer("==============================================\n");
 
     screen.draw();
 }
 
 void Game::update() {
-    if (gameOver) return;
+    if (gameOver || paused) return;
 
     snake.move();
     updateSpecialFood();
+    updatePoisonFood(); // New: Update poison food
+    updateShield(); // New: Update shield power-up
     updateObstacles();
 
     pair<int, int> head = snake.getHead();
 
-    // Check Wall Collision
+    // Check Wall Collision (shield doesn't protect from walls)
     if (head.first < 0 || head.first >= WIDTH || 
         head.second < 0 || head.second >= HEIGHT) {
         gameOver = true;
@@ -557,18 +820,20 @@ void Game::update() {
         return;
     }
 
-    // Check Self Collision
-    for (size_t i = 1; i < snake.getBody().size(); i++) {
-        if (head.first == snake.getBody()[i].first && 
-            head.second == snake.getBody()[i].second) {
-            gameOver = true;
-            saveHighScore(); // --- HIGH SCORE ADDITION: Save on game over
-            return;
+    // Check Self Collision (skip if shield is active)
+    if (!snake.hasShield()) {
+        for (size_t i = 1; i < snake.getBody().size(); i++) {
+            if (head.first == snake.getBody()[i].first && 
+                head.second == snake.getBody()[i].second) {
+                gameOver = true;
+                saveHighScore(); // --- HIGH SCORE ADDITION: Save on game over
+                return;
+            }
         }
     }
     
-    // Check Obstacle Collision
-    if (obstaclesActive) {
+    // Check Obstacle Collision (skip if shield is active)
+    if (obstaclesActive && !snake.hasShield()) {
         for (const auto& obs : obstacles) {
             if (head.first == obs.first && head.second == obs.second) {
                 gameOver = true;
@@ -587,6 +852,7 @@ void Game::update() {
         
         if (foodEaten % 4 == 0) {
             spawnSpecialFood();
+            spawnPoisonFood(); // Spawn poison food along with special food
         }
         if (foodEaten % 5 == 0) {
             spawnObstacles();
@@ -598,6 +864,24 @@ void Game::update() {
         score += 30;
         snake.setGrow(true, 3);
         specialFoodActive = false;
+        specialFoodEaten++;
+    }
+
+    // New: Check Poison Food consumption
+    if (poisonFoodActive && head.first == poisonFood.first && head.second == poisonFood.second) {
+        score = max(0, score - 30); // Decrease score, but not below 0
+        
+        // Decrease length by 3 by removing tail segments
+        snake.shrink(3);
+        
+        poisonFoodActive = false;
+        poisonFoodEaten++;
+    }
+
+    // New: Check Shield Power-up consumption
+    if (shieldActive && head.first == shield.first && head.second == shield.second) {
+        snake.activateShield();
+        shieldActive = false;
     }
 }
 
@@ -635,6 +919,7 @@ void Game::handleInput() {
                 case 's': snake.changeDirection(DOWN); break;
                 case 'a': snake.changeDirection(LEFT); break;
                 case 'd': snake.changeDirection(RIGHT); break;
+                case ' ': togglePause(); break; // New: Spacebar toggles pause
                 case 'q': quit = true; break;
             }
         }
