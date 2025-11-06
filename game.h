@@ -53,8 +53,8 @@ private:
     bool wallCrash;
 
     // Obstacle members
-    const int OBSTACLE_DURATION = 8;
-    const int OBSTACLE_COUNT = 5;
+    const int OBSTACLE_DURATION = 10;
+    const int OBSTACLE_COUNT = 7;
     vector<pair<int, int>> obstacles;
     chrono::steady_clock::time_point obstacleSpawnTime;
     bool obstaclesActive;
