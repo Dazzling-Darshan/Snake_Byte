@@ -25,15 +25,25 @@ private:
     Direction nextDir;
     bool grow;
     int growAmount;
+    bool shieldActive; // New: Shield status
+    chrono::steady_clock::time_point shieldStartTime; // New: Shield timer
 
 public:
     Snake(int startX, int startY);
     void changeDirection(Direction newDir);
     void move();
     void setGrow(bool shouldGrow, int amount = 1);
+    void shrink(int amount); // New: Method to shrink snake
     const vector<pair<int, int>>& getBody() const;
     pair<int, int> getHead() const;
     int getLength() const;
+    
+    // New: Shield methods
+    void activateShield();
+    void deactivateShield();
+    bool hasShield() const;
+    int getShieldTimeRemaining() const;
+    bool shouldBlink() const; // For blinking effect
 };
 
 class Game {
@@ -41,14 +51,27 @@ private:
     Snake snake;
     pair<int, int> food;
     pair<int, int> specialFood;
+    pair<int, int> poisonFood; // New: Poison food
+    pair<int, int> shield; // New: Shield power-up
     int score;
     bool gameOver;
     bool quit;
+    bool paused; // New: Pause state
     Screen screen;
     int foodEaten;
+    int specialFoodEaten; // New: Counter for special food
+    int poisonFoodEaten; // New: Counter for poison food
     bool specialFoodActive;
+    bool poisonFoodActive; // New: Poison food status
+    bool shieldActive; // New: Shield power-up status
     chrono::steady_clock::time_point specialFoodSpawnTime;
+    chrono::steady_clock::time_point poisonFoodSpawnTime; // New: Poison food timer
+    chrono::steady_clock::time_point shieldSpawnTime; // New: Shield spawn timer
+    chrono::steady_clock::time_point lastShieldSpawnTime; // New: Last shield spawn time
     const int SPECIAL_FOOD_DURATION = 10;
+    const int POISON_FOOD_DURATION = 10; // New: Poison food duration
+    const int SHIELD_DURATION = 10; // New: Shield power-up duration
+    const int SHIELD_SPAWN_INTERVAL = 60; // Changed: Shield spawn interval to 60 seconds
     pair<int, int> crashPosition;
     bool wallCrash;
 
@@ -75,8 +98,12 @@ private:
     bool isObstacle(int x, int y) const;
     void spawnFood();
     void spawnSpecialFood();
+    void spawnPoisonFood(); // New: Spawn poison food
+    void spawnShield(); // New: Spawn shield power-up
     void spawnObstacles();
     void updateSpecialFood();
+    void updatePoisonFood(); // New: Update poison food
+    void updateShield(); // New: Update shield power-up
     void updateObstacles();
     int getObstacleTimeRemaining() const;
 
@@ -88,6 +115,8 @@ public:
     void handleInput();
     bool isGameOver() const;
     bool shouldQuit() const;
+    bool isPaused() const; // New: Get pause state
+    void togglePause(); // New: Toggle pause state
     int getGameSpeed();
 
     // --- HIGH SCORE METHODS ---
