@@ -7,7 +7,7 @@
 #include <ctime>
 #include <thread>
 #include <chrono>
-#include <fstream>
+#include <fstream> // Required for file I/O (High Score)
 #include <string>
 #include <algorithm>
 #include <cmath>
@@ -64,6 +64,13 @@ private:
     int minSpeed = 75;
     int speedDecrement = 9;
 
+    // --- HIGH SCORE ADDITIONS ---
+    // Variable to hold the loaded high score
+    int highScore;
+    // Constant for the high score filename
+    const string HIGHSCORE_FILE = "highscore.txt";
+    // ----------------------------
+
     // Helper methods
     bool isObstacle(int x, int y) const;
     void spawnFood();
@@ -82,6 +89,13 @@ public:
     bool isGameOver() const;
     bool shouldQuit() const;
     int getGameSpeed();
+
+    // --- HIGH SCORE METHODS ---
+    // Loads the score from the file
+    void loadHighScore();
+    // Saves the current score if it's a new high score
+    void saveHighScore();
+    // --------------------------
 };
 
 #endif
