@@ -152,6 +152,22 @@ snake_game/
 └── special_food.txt    # Custom special food graphic (optional)
 
 ```
+# Program Flow
+``` main()
+ ├── setup console + input
+ ├── Game()
+ │    ├── Snake()
+ │    ├── spawnFood()
+ │    └── hide cursor
+ ├── while (!gameOver)
+ │     ├── draw()
+ │     ├── handleInput()
+ │     ├── update()
+ │     └── sleep(speed)
+ └── show cursor & exit
+
+```
+
 
 # 🎨 Customization
 
