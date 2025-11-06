@@ -24,8 +24,11 @@ extern string SNAKE_HEAD;
 extern string SNAKE_HEAD_DEAD;
 extern string SNAKE_BODY;
 extern string SNAKE_BODY_DEAD;
+extern string SNAKE_BODY_SHIELD; // New: Shielded snake body
 extern string FOOD_EMOJI;
 extern string SPECIAL_FOOD_EMOJI;
+extern string POISON_FOOD_EMOJI; // New: Poison food emoji
+extern string SHIELD_EMOJI; // New: Shield power-up emoji
 extern string WALL;
 extern string EMPTY_SPACE;
 
