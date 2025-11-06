@@ -153,7 +153,8 @@ snake_game/
 
 ```
 # Program Flow
-``` main()
+```
+ main()
  ├── setup console + input
  ├── Game()
  │    ├── Snake()
