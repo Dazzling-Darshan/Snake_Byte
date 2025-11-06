@@ -11,6 +11,7 @@
 #include <string>
 #include <algorithm>
 #include <cmath>
+#include <stdexcept> // Added for exception handling with stoi
 
 using namespace std;
 
@@ -245,7 +246,7 @@ int Snake::getLength() const {
 // Game implementation
 Game::Game() : snake(WIDTH / 4, HEIGHT / 2), score(0), gameOver(false), quit(false), 
              foodEaten(0), specialFoodActive(false), wallCrash(false),
-             obstaclesActive(false) {
+             obstaclesActive(false), highScore(0) { // Initialize highScore to 0
     srand(static_cast<unsigned int>(time(0)));
     
     setupConsole();
@@ -255,12 +256,61 @@ Game::Game() : snake(WIDTH / 4, HEIGHT / 2), score(0), gameOver(false), quit(fal
         // Custom graphics loaded silently
     }
     
+    // --- HIGH SCORE ADDITION: Load the score upon starting the game
+    loadHighScore();
+    
     spawnFood();
 }
 
 Game::~Game() {
     screen.showCursor();
 }
+
+// --- HIGH SCORE IMPLEMENTATIONS ---
+
+/**
+ * Loads the high score from the file, setting to 0 if the file doesn't exist
+ * or contains invalid data.
+ */
+void Game::loadHighScore() {
+    ifstream file(HIGHSCORE_FILE);
+    if (file.is_open()) {
+        string line;
+        if (getline(file, line)) {
+            try {
+                // Attempt to convert string to integer
+                highScore = stoi(line);
+            } catch (const std::invalid_argument& e) {
+                // Non-numeric data found
+                highScore = 0; 
+            } catch (const std::out_of_range& e) {
+                // Number too large/small
+                highScore = 0;
+            }
+        }
+        file.close();
+    } else {
+        highScore = 0;
+    }
+}
+
+/**
+ * Saves the current score as the new high score if it is greater than the
+ * currently loaded high score.
+ */
+void Game::saveHighScore() {
+    if (score > highScore) {
+        highScore = score;
+        ofstream file(HIGHSCORE_FILE);
+        if (file.is_open()) {
+            file << highScore;
+            file.close();
+        }
+    }
+}
+
+// --- END HIGH SCORE IMPLEMENTATIONS ---
+
 
 bool Game::isObstacle(int x, int y) const {
     if (!obstaclesActive) return false;
@@ -471,7 +521,8 @@ void Game::draw() {
     }
     screen.addToBuffer("\n");
 
-    screen.addToBuffer("Score: " + to_string(score) + " 🏆 | Snake Length: " + to_string(snake.getLength()) + "\n");
+    // --- UPDATED: Added High Score Display ---
+    screen.addToBuffer("Score: " + to_string(score) + " 🏆 | High Score: " + to_string(highScore) + " ⭐ | Length: " + to_string(snake.getLength()) + "\n");
     screen.addToBuffer("Speed: " + to_string(getGameSpeed()) + "ms | Obstacles: " + (obstaclesActive ? to_string(getObstacleTimeRemaining()) + "s 🚧" : "Clear ") + " | Controls: WASD/Arrows | Q to Quit\n");
     
     if (gameOver) {
@@ -490,37 +541,44 @@ void Game::update() {
 
     pair<int, int> head = snake.getHead();
 
+    // Check Wall Collision
     if (head.first < 0 || head.first >= WIDTH || 
         head.second < 0 || head.second >= HEIGHT) {
         gameOver = true;
         wallCrash = true;
-        crashPosition = head;
         
+        // Determine crash position for drawing the dead snake head on the wall
         if (head.first < 0) crashPosition = make_pair(-1, head.second);
         else if (head.first >= WIDTH) crashPosition = make_pair(WIDTH, head.second);
         else if (head.second < 0) crashPosition = make_pair(head.first, -1);
         else if (head.second >= HEIGHT) crashPosition = make_pair(head.first, HEIGHT);
         
+        saveHighScore(); // --- HIGH SCORE ADDITION: Save on game over
         return;
     }
 
+    // Check Self Collision
     for (size_t i = 1; i < snake.getBody().size(); i++) {
         if (head.first == snake.getBody()[i].first && 
             head.second == snake.getBody()[i].second) {
             gameOver = true;
+            saveHighScore(); // --- HIGH SCORE ADDITION: Save on game over
             return;
         }
     }
     
+    // Check Obstacle Collision
     if (obstaclesActive) {
         for (const auto& obs : obstacles) {
             if (head.first == obs.first && head.second == obs.second) {
                 gameOver = true;
+                saveHighScore(); // --- HIGH SCORE ADDITION: Save on game over
                 return;
             }
         }
     }
 
+    // Check Food consumption
     if (head.first == food.first && head.second == food.second) {
         score += 10;
         snake.setGrow(true, 1);
@@ -535,6 +593,7 @@ void Game::update() {
         }
     }
 
+    // Check Special Food consumption
     if (specialFoodActive && head.first == specialFood.first && head.second == specialFood.second) {
         score += 30;
         snake.setGrow(true, 3);
