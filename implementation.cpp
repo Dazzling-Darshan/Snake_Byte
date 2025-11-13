@@ -293,6 +293,16 @@ bool Snake::shouldBlink() const {
     return (elapsed / 500) % 2 == 0;
 }
 
+// MODIFIED: Adjust shield timer after a pause
+// The parameter now uses the correct duration type (steady_clock::duration)
+void Snake::adjustShieldStartTime(chrono::steady_clock::duration pauseDuration) {
+    if (shieldActive) {
+        // When resuming, add the pause duration to the start time. 
+        // This shifts the 'start' further into the past, compensating for the time that elapsed while paused.
+        shieldStartTime += pauseDuration; 
+    }
+}
+
 // Game implementation
 Game::Game() : snake(WIDTH / 4, HEIGHT / 2), score(0), gameOver(false), quit(false), 
              paused(false), foodEaten(0), specialFoodEaten(0), poisonFoodEaten(0), 
@@ -412,7 +422,7 @@ void Game::spawnSpecialFood() {
         specialFood.second = rand() % (HEIGHT - 2) + 1;
         
         for (const auto& segment : snake.getBody()) {
-            if (segment.first == specialFood.first && segment.second == specialFood.second) {
+            if (segment.first == specialFood.first && specialFood.second == specialFood.second) {
                 occupied = true;
                 break;
             }
@@ -446,7 +456,7 @@ void Game::spawnPoisonFood() {
         poisonFood.second = rand() % (HEIGHT - 2) + 1;
         
         for (const auto& segment : snake.getBody()) {
-            if (segment.first == poisonFood.first && segment.second == poisonFood.second) {
+            if (segment.first == poisonFood.first && poisonFood.second == poisonFood.second) {
                 occupied = true;
                 break;
             }
@@ -477,7 +487,7 @@ void Game::spawnShield() {
         shield.second = rand() % (HEIGHT - 2) + 1;
         
         for (const auto& segment : snake.getBody()) {
-            if (segment.first == shield.first && segment.second == shield.second) {
+            if (segment.first == shield.first && shield.second == shield.second) {
                 occupied = true;
                 break;
             }
@@ -601,6 +611,9 @@ int Game::getGameSpeed() {
     return max(calculatedSpeed, minSpeed);
 }
 
+// --- TIMER REMAINING HELPERS (For Draw) ---
+
+// Calculates remaining time for active obstacles
 int Game::getObstacleTimeRemaining() const {
     if (!obstaclesActive) return 0;
     auto now = chrono::steady_clock::now();
@@ -608,14 +621,68 @@ int Game::getObstacleTimeRemaining() const {
     return max(0, OBSTACLE_DURATION - (int)elapsed);
 }
 
+// ADDED: Calculates remaining time for active special food
+int Game::getSpecialFoodTimeRemaining() const {
+    if (!specialFoodActive) return 0;
+    auto now = chrono::steady_clock::now();
+    auto elapsed = chrono::duration_cast<chrono::seconds>(now - specialFoodSpawnTime).count();
+    return max(0, SPECIAL_FOOD_DURATION - (int)elapsed);
+}
+
+// ADDED: Calculates remaining time until the next shield spawns
+int Game::getShieldSpawnRemaining() const {
+    if (shieldActive || snake.hasShield()) return 0; // Don't show spawn countdown if a shield is already on the map or active on snake
+    auto now = chrono::steady_clock::now();
+    auto timeSinceLastSpawn = chrono::duration_cast<chrono::seconds>(now - lastShieldSpawnTime);
+    return max(0, SHIELD_SPAWN_INTERVAL - (int)timeSinceLastSpawn.count());
+}
+
+// --- END TIMER REMAINING HELPERS ---
+
 // New: Get pause state
 bool Game::isPaused() const {
     return paused;
 }
 
-// New: Toggle pause state
+// MODIFIED: Toggle pause state with time compensation
 void Game::togglePause() {
     paused = !paused;
+    
+    if (paused) {
+        pauseStartTime = chrono::steady_clock::now();
+    } else {
+        auto now = chrono::steady_clock::now();
+        // Calculate the duration of the pause. This results in steady_clock::duration.
+        auto pauseDuration = now - pauseStartTime; 
+        
+        // Compensate all active and spawning timers by ADDING the pause duration to their start times
+        
+        // 1. Special Food
+        if (specialFoodActive) {
+            specialFoodSpawnTime += pauseDuration;
+        }
+        
+        // 2. Poison Food (if active)
+        if (poisonFoodActive) {
+             poisonFoodSpawnTime += pauseDuration;
+        }
+        
+        // 3. Obstacles
+        if (obstaclesActive) {
+            obstacleSpawnTime += pauseDuration;
+        }
+
+        // 4. Shield Spawn Timer
+        lastShieldSpawnTime += pauseDuration;
+        
+        // 5. Shield Power-up Active on Snake
+        snake.adjustShieldStartTime(pauseDuration);
+        
+        // 6. Shield Power-up on map (if it hasn't been picked up)
+        if (shieldActive) {
+            shieldSpawnTime += pauseDuration;
+        }
+    }
 }
 
 void Game::draw() {
@@ -636,13 +703,13 @@ void Game::draw() {
         }
         
         for (int x = 0; x < WIDTH; x++) {
-            if (gameOver && y == HEIGHT/2 - 1 && x == WIDTH/2 - 4) {
+            if (gameOver && y == HEIGHT/2 - 4 && x == WIDTH/2 - 4) {
                 screen.addToBuffer("G A M E  O V E R");
                 x += 7;
                 continue;
             }
             
-            if (paused && y == HEIGHT/2 && x == WIDTH/2 - 3) {
+            if (paused && y == HEIGHT/2 - 3 && x == WIDTH/2 - 3) {
                 screen.addToBuffer("P A U S E D");
                 x += 5;
                 continue;
@@ -727,8 +794,17 @@ void Game::draw() {
     leftCol += string(25 - leftCol.length(), ' ');
     screen.addToBuffer(leftCol);
     
-    // Right Column
-    string rightCol = "Apples: " + to_string(foodEaten) + " 🍎";
+    // Right Column: Special Food Status
+    string specialFoodStatus;
+    if (paused && specialFoodActive) {
+        specialFoodStatus = "PAUSED            ";
+    } else if (specialFoodActive) {
+        int remaining = getSpecialFoodTimeRemaining();
+        specialFoodStatus = "Active " + to_string(remaining) + " s";
+    } else {
+        specialFoodStatus = to_string(specialFoodEaten) + "             ";
+    }
+    string rightCol = "Special: " + specialFoodStatus + " ";
     screen.addToBuffer(rightCol + "\n");
     
     // Left Column
@@ -737,7 +813,7 @@ void Game::draw() {
     screen.addToBuffer(leftCol);
     
     // Right Column
-    rightCol = "Special: " + to_string(specialFoodEaten) + " " + SPECIAL_FOOD_EMOJI;
+    rightCol = "Speed: " + to_string(getGameSpeed()) + "ms 🚀";
     screen.addToBuffer(rightCol + "\n");
     
     // Left Column
@@ -745,34 +821,44 @@ void Game::draw() {
     leftCol += string(25 - leftCol.length(), ' ');
     screen.addToBuffer(leftCol);
     
-    // Right Column
-    rightCol = "Poison: " + to_string(poisonFoodEaten) + " " + POISON_FOOD_EMOJI;
-    screen.addToBuffer(rightCol + "\n");
+    // 
     
-    // Left Column
-    leftCol = "Speed: " + to_string(getGameSpeed()) + "ms 🚀";
-    leftCol += string(25 - leftCol.length(), ' ');
-    screen.addToBuffer(leftCol);
     
-    // Shield status
+    // Shield status (Combined logic for active shield and spawn timer)
     string shieldStatus;
-    if (snake.hasShield()) {
-        shieldStatus = "Shield: ACTIVE (" + to_string(snake.getShieldTimeRemaining()) + "s) 🛡️";
+    if (paused) {
+        // Paused state overrides everything
+        if (snake.hasShield()) {
+             shieldStatus = "Shield: PAUSED           "; 
+        } else {
+             shieldStatus = "Shield: PAUSED           ";
+        }
+    } else if (snake.hasShield()) {
+        // Snake has active shield
+        shieldStatus = "Shield: Active " + to_string(snake.getShieldTimeRemaining()) + " s 🛡️";
     } else if (shieldActive) {
+        // Shield power-up is on the map (Time on map is SHIELD_DURATION)
         auto now = chrono::steady_clock::now();
         auto elapsed = chrono::duration_cast<chrono::seconds>(now - shieldSpawnTime).count();
-        int remaining = max(0, SHIELD_DURATION - (int)elapsed);
+        int remaining = max(0, SHIELD_DURATION - (int)elapsed); 
         shieldStatus = "Shield: Available (" + to_string(remaining) + "s) " + SHIELD_EMOJI;
     } else {
-        auto now = chrono::steady_clock::now();
-        auto elapsed = chrono::duration_cast<chrono::seconds>(now - lastShieldSpawnTime).count();
-        int nextSpawn = max(0, SHIELD_SPAWN_INTERVAL - (int)elapsed);
-        shieldStatus = "Shield: Next in " + to_string(nextSpawn) + "s";
+        // Waiting for next shield spawn
+        int nextSpawn = getShieldSpawnRemaining();
+        shieldStatus = "Shield: Available in " + to_string(nextSpawn) + " s";
     }
     screen.addToBuffer(shieldStatus + "\n");
     
     // Obstacles status - full width
-    string obstacleStr = "Obstacles: " + (obstaclesActive ? to_string(getObstacleTimeRemaining()) + "s 🚧" : "Clear");
+    string obstacleStr;
+    if (paused && obstaclesActive) {
+        obstacleStr = "Obstacles: PAUSED           ";
+    } else if (obstaclesActive) {
+        int remaining = getObstacleTimeRemaining();
+        obstacleStr = "Obstacles: Active " + to_string(remaining) + " s 🚧";
+    } else {
+        obstacleStr = "Obstacles: Clear            ";
+    }
     screen.addToBuffer(obstacleStr + "\n");
     
     screen.addToBuffer("----------------------------------------------\n");
@@ -781,11 +867,11 @@ void Game::draw() {
     screen.addToBuffer("Controls: WASD/Arrows | SPACE: Pause | Q: Quit\n");
     
     if (paused) {
-        screen.addToBuffer("           *** GAME PAUSED ***              \n");
+        screen.addToBuffer("             *** GAME PAUSED ***                 \n");
     }
     
     if (gameOver) {
-        screen.addToBuffer("          💀 GAME OVER! Press any key      \n");
+        screen.addToBuffer("                 💀 GAME OVER! 💀                \n");
     }
     
     screen.addToBuffer("==============================================\n");
@@ -794,6 +880,7 @@ void Game::draw() {
 }
 
 void Game::update() {
+    // If paused, timers are stopped via togglePause, but game logic must stop
     if (gameOver || paused) return;
 
     snake.move();

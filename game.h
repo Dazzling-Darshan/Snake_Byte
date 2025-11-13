@@ -44,6 +44,8 @@ public:
     bool hasShield() const;
     int getShieldTimeRemaining() const;
     bool shouldBlink() const; // For blinking effect
+    // MODIFIED: Use steady_clock's native duration type
+    void adjustShieldStartTime(chrono::steady_clock::duration pauseDuration); 
 };
 
 class Game {
@@ -68,6 +70,10 @@ private:
     chrono::steady_clock::time_point poisonFoodSpawnTime; // New: Poison food timer
     chrono::steady_clock::time_point shieldSpawnTime; // New: Shield spawn timer
     chrono::steady_clock::time_point lastShieldSpawnTime; // New: Last shield spawn time
+    
+    // ADDED: Pause tracking variable
+    chrono::steady_clock::time_point pauseStartTime;
+
     const int SPECIAL_FOOD_DURATION = 10;
     const int POISON_FOOD_DURATION = 10; // New: Poison food duration
     const int SHIELD_DURATION = 10; // New: Shield power-up duration
@@ -105,6 +111,10 @@ private:
     void updatePoisonFood(); // New: Update poison food
     void updateShield(); // New: Update shield power-up
     void updateObstacles();
+    
+    // Timer calculation helpers (for drawing stats)
+    int getSpecialFoodTimeRemaining() const; // ADDED
+    int getShieldSpawnRemaining() const;     // ADDED
     int getObstacleTimeRemaining() const;
 
 public:
@@ -116,7 +126,7 @@ public:
     bool isGameOver() const;
     bool shouldQuit() const;
     bool isPaused() const; // New: Get pause state
-    void togglePause(); // New: Toggle pause state
+    void togglePause(); // MODIFIED: Logic updated to handle timer compensation
     int getGameSpeed();
 
     // --- HIGH SCORE METHODS ---
