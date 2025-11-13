@@ -40,6 +40,8 @@ Self-collision detection
 
 # Enhanced Features
 
+Play pause functionality
+
 Special Food System 🍇🍌🍋
 
 Spawns every 4 regular foods
