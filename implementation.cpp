@@ -789,77 +789,65 @@ void Game::draw() {
     screen.addToBuffer("             GAME STATISTICS                 \n");
     screen.addToBuffer("----------------------------------------------\n");
     
-    // Left Column
-    string leftCol = "Score: " + to_string(score) + " 🏆";
-    leftCol += string(25 - leftCol.length(), ' ');
-    screen.addToBuffer(leftCol);
+    // Score
+    screen.addToBuffer("Score: " + to_string(score) + " 🏆\n");
     
-    // Right Column: Special Food Status
+    // High Score
+    screen.addToBuffer("High Score: " + to_string(highScore) + " ⭐\n");
+    
+    // Length
+    screen.addToBuffer("Length: " + to_string(snake.getLength()) + " 📏\n");
+    
+    // Speed
+    screen.addToBuffer("Speed: " + to_string(getGameSpeed()) + "ms 🚀\n");
+    
+    // Special Food Status
     string specialFoodStatus;
     if (paused && specialFoodActive) {
-        specialFoodStatus = "PAUSED            ";
+        specialFoodStatus = "      PAUSED      ";
     } else if (specialFoodActive) {
         int remaining = getSpecialFoodTimeRemaining();
         specialFoodStatus = "Active " + to_string(remaining) + " s";
     } else {
-        specialFoodStatus = to_string(specialFoodEaten) + "             ";
+        specialFoodStatus = "Eaten: " + to_string(specialFoodEaten);
     }
-    string rightCol = "Special: " + specialFoodStatus + " ";
-    screen.addToBuffer(rightCol + "\n");
-    
-    // Left Column
-    leftCol = "High Score: " + to_string(highScore) + " ⭐";
-    leftCol += string(25 - leftCol.length(), ' ');
-    screen.addToBuffer(leftCol);
-    
-    // Right Column
-    rightCol = "Speed: " + to_string(getGameSpeed()) + "ms 🚀";
-    screen.addToBuffer(rightCol + "\n");
-    
-    // Left Column
-    leftCol = "Length: " + to_string(snake.getLength()) + " 📏";
-    leftCol += string(25 - leftCol.length(), ' ');
-    screen.addToBuffer(leftCol);
-    
-    // 
-    
+    screen.addToBuffer("Special Food: " + specialFoodStatus + "        \n");
     
     // Shield status (Combined logic for active shield and spawn timer)
     string shieldStatus;
     if (paused) {
-        // Paused state overrides everything
-        if (snake.hasShield()) {
-             shieldStatus = "Shield: PAUSED           "; 
+        if (snake.hasShield() || shieldActive) {
+             shieldStatus = "      PAUSED      "; 
         } else {
-             shieldStatus = "Shield: PAUSED           ";
+             shieldStatus = "      PAUSED      ";
         }
     } else if (snake.hasShield()) {
         // Snake has active shield
-        shieldStatus = "Shield: Active " + to_string(snake.getShieldTimeRemaining()) + " s 🛡️";
+        shieldStatus = "Active " + to_string(snake.getShieldTimeRemaining()) + " s 🛡️     ";
     } else if (shieldActive) {
         // Shield power-up is on the map (Time on map is SHIELD_DURATION)
         auto now = chrono::steady_clock::now();
         auto elapsed = chrono::duration_cast<chrono::seconds>(now - shieldSpawnTime).count();
         int remaining = max(0, SHIELD_DURATION - (int)elapsed); 
-        shieldStatus = "Shield: Available (" + to_string(remaining) + "s) " + SHIELD_EMOJI;
+        shieldStatus = "Available (" + to_string(remaining) + "s) " + SHIELD_EMOJI;
     } else {
         // Waiting for next shield spawn
         int nextSpawn = getShieldSpawnRemaining();
-        shieldStatus = "Shield: Available in " + to_string(nextSpawn) + " s";
+        shieldStatus = "Available in " + to_string(nextSpawn) + " s  ";
     }
-    screen.addToBuffer(shieldStatus + "\n");
+    screen.addToBuffer("Shield: " + shieldStatus + "\n");
     
     // Obstacles status - full width
     string obstacleStr;
     if (paused && obstaclesActive) {
-        obstacleStr = "Obstacles: PAUSED           ";
+        obstacleStr = "      PAUSED      ";
     } else if (obstaclesActive) {
         int remaining = getObstacleTimeRemaining();
-        obstacleStr = "Obstacles: Active " + to_string(remaining) + " s 🚧";
+        obstacleStr = "Active " + to_string(remaining) + " s 🚧      ";
     } else {
-        obstacleStr = "Obstacles: Clear            ";
+        obstacleStr = "Clear              ";
     }
-    screen.addToBuffer(obstacleStr + "\n");
+    screen.addToBuffer("Obstacles: " + obstacleStr + "\n");
     
     screen.addToBuffer("----------------------------------------------\n");
     
@@ -867,7 +855,7 @@ void Game::draw() {
     screen.addToBuffer("Controls: WASD/Arrows | SPACE: Pause | Q: Quit\n");
     
     if (paused) {
-        screen.addToBuffer("             *** GAME PAUSED ***                 \n");
+        screen.addToBuffer("               *** GAME PAUSED ***               \n");
     }
     
     if (gameOver) {
@@ -878,7 +866,6 @@ void Game::draw() {
 
     screen.draw();
 }
-
 void Game::update() {
     // If paused, timers are stopped via togglePause, but game logic must stop
     if (gameOver || paused) return;
