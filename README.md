@@ -119,6 +119,8 @@ D or → - Move Right
 
 Q - Quit Game
 
+Spacebar - Pause / Resume Game
+
 # Game Rules
 
 Objective: Eat food to grow longer and score points
