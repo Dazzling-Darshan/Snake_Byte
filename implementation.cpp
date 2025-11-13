@@ -170,7 +170,7 @@ bool loadCustomGraphics() {
         bodyFile.close();
     }
 
-    ifstream specialFoodFile("special_food.txt");
+    ifstream specialFoodFile("food.txt");
     if (specialFoodFile.is_open()) {
         string line;
         if (getline(specialFoodFile, line)) {
