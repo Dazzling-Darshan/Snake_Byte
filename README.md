@@ -68,7 +68,14 @@ Load custom emojis/text from files
 
 Fallback to default emoji graphics
 
-Supports: head.txt, body.txt, special_food.txt
+Supports: head.txt, body.txt, food.txt
+
+# Poison food 🍄
+
+Spawns alongside Special Food (after every 4 regular foods).
+
+Shrinks the snake by 3 segments and deducts 30 points.
+
 
 # Technical Features
 
@@ -129,7 +136,11 @@ Regular Food 🍎: +10 points, +1 length
 
 Special Food 🍇: +30 points, +3 length (spawns every 4 foods)
 
-Avoid: Walls, your own body, and temporary obstacles
+Poison Food 🍄: Shrinks snake by 3 segments, -30 points.
+
+Shield 🛡️: Grants temporary immunity to self-collision and obstacles.
+
+Avoid: Walls, your own body, poison food ,and temporary obstacles
 
 # Game Over conditions:
 
@@ -144,6 +155,8 @@ Run into obstacles
 Regular food: 10 points
 
 Special food: 30 points
+
+Poison food : -30 points
 
 Score display updates in real-time
 
