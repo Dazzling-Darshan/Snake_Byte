@@ -13,13 +13,20 @@ Harsh Abhichandani (202512027)
 
 # Gameplay Snapshots
 
-<img width="885" height="577" alt="p1" src="https://github.com/user-attachments/assets/73dbf3bb-0c5b-4f82-82ea-33242ed07d77" />
+<img width="885" height="577" alt="g1" src="https://github.com/user-attachments/assets/a1607e2d-b096-4255-b451-f51158909177" />
+
 
 .
-<img width="885" height="577" alt="p2" src="https://github.com/user-attachments/assets/8629d329-9fde-46b4-b4d0-436200e186c3" />
+<img width="885" height="577" alt="g2" src="https://github.com/user-attachments/assets/1df3c973-5afa-4092-b5fb-3c9afef7fdac" />
+
 
 .
-<img width="885" height="577" alt="p3" src="https://github.com/user-attachments/assets/56238562-912c-4298-90cf-38ddb4579d67" />
+<img width="885" height="577" alt="g3" src="https://github.com/user-attachments/assets/4027c6fc-1ed0-4740-bf92-74b6f2f8425c" />
+
+
+<img width="885" height="577" alt="g4" src="https://github.com/user-attachments/assets/6588aedb-2130-4e31-a5b8-3ec60c535553" />
+
+<img width="885" height="577" alt="g5" src="https://github.com/user-attachments/assets/81d0b9c6-1aac-4c84-ba9b-efa3be72bb84" />
 
 
 
