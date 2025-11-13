@@ -77,7 +77,7 @@ private:
     const int SPECIAL_FOOD_DURATION = 10;
     const int POISON_FOOD_DURATION = 10; // New: Poison food duration
     const int SHIELD_DURATION = 10; // New: Shield power-up duration
-    const int SHIELD_SPAWN_INTERVAL = 60; // Changed: Shield spawn interval to 60 seconds
+    const int SHIELD_SPAWN_INTERVAL = 45; // Changed: Shield spawn interval to 60 seconds
     pair<int, int> crashPosition;
     bool wallCrash;
 
